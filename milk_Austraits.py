@@ -21,18 +21,21 @@ PHEN = []
 PGF = []
 PHOT = []
 
+### Phenology
 for i in TN:
     try:
         PHEN.append(df_PHEN[df_PHEN.taxon_name == i].loc[:,'value'].mode()[0])
     except KeyError:
         PHEN.append(np.nan)
 
+### Plant growth form        
 for i in TN:
     try:
         PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].mode()[0])
     except KeyError:
         PGF.append(np.nan)
 
+### Photosynthetic pathway       
 for i in TN:
     try:
         PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
