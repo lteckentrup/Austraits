@@ -17,7 +17,6 @@ TN = df_SLA.taxon_name.to_list()
 ### Loop through all names and assign phenology, growth form,
 ### and photosyntetic pathway. Loops need to be separate to avoid double 
 ### counting of nan
-
 PHEN = []
 PGF = []
 PHOT = []
