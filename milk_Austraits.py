@@ -12,6 +12,7 @@ def grab_trait(trait_name):
     df_PHEN = df_AusTraits[df_AusTraits['trait_name'] == 'leaf_phenology']
     df_PGF = df_AusTraits[df_AusTraits['trait_name'] == 'plant_growth_form']
     df_PHOT = df_AusTraits[df_AusTraits['trait_name'] == 'photosynthetic_pathway']
+    df_LeafType = df_AusTraits[df_AusTraits['trait_name'] == 'leaf_type']
 
     ### All taxon names into list
     TN = df_trait.taxon_name.to_list()
@@ -25,6 +26,7 @@ def grab_trait(trait_name):
     PHEN = []
     PGF = []
     PHOT = []
+    LeafType = []
 
     ### Phenology
     for i in TN:
@@ -46,6 +48,13 @@ def grab_trait(trait_name):
             PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
         except KeyError:
             PHOT.append(np.nan)
+
+    ### Leaf type
+    for i in TN:
+        try:
+            LeafType.append(df_LeafType[df_LeafType.taxon_name == i].loc[:,'value'].mode()[0])
+        except KeyError:
+            LeafType.append(np.nan)
 
     ### Add info to dataframe
     df_trait['PHEN'] = PHEN
@@ -71,7 +80,7 @@ def grab_trait(trait_name):
     ### Get latitude
     for sn,di in zip(SN,DI):
         try:
-            lat = df_lats[(df_lats.site_name == sn) & 
+            lat = df_lats[(df_lats.site_name == sn) &
                           (df_lats.dataset_id == di)].loc[:,'value'].iloc[0]
             lats.append(float(lat))
         except IndexError:
@@ -80,7 +89,7 @@ def grab_trait(trait_name):
     ### Get longitude
     for sn,di in zip(SN,DI):
         try:
-            lon = df_lons[(df_lons.site_name == sn) & 
+            lon = df_lons[(df_lons.site_name == sn) &
                           (df_lons.dataset_id == di)].loc[:,'value'].iloc[0]
             lons.append(float(lon))
         except IndexError:
@@ -92,3 +101,7 @@ def grab_trait(trait_name):
     return (df_trait)
 
 df_SLA = grab_trait('specific_leaf_area')
+df_SLA_filter = df_SLA[['value','PHEN','PGF','PHOT','LeafType','lat','lon']].dropna()
+
+df_SLA_herb = df_SLA_filter[df_SLA_filter['PGF'].str.contains('herb|graminoid_not_tussock')]
+df_SLA_tree = df_SLA_filter[df_SLA_filter['PGF'].str.contains('tree')]
