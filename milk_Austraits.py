@@ -60,7 +60,8 @@ def grab_trait(trait_name):
     df_trait['PHEN'] = PHEN
     df_trait['PGF'] = PGF
     df_trait['PHOT'] = PHOT
-
+    df_trait['LeafType'] = LeafType
+    
     '''
     Now grab site information: latitude and longitude so traits can be grouped into
     temperate and tropical vegetation (LPJ-GUESS has temperatue and tropical PFTs)
@@ -101,6 +102,8 @@ def grab_trait(trait_name):
     return (df_trait)
 
 df_SLA = grab_trait('specific_leaf_area')
+df_SLA = grab_trait('leaf_C_per_dry_mass')
+
 df_SLA_filter = df_SLA[['value','PHEN','PGF','PHOT','LeafType','lat','lon']].dropna()
 
 df_SLA_herb = df_SLA_filter[df_SLA_filter['PGF'].str.contains('herb|graminoid_not_tussock')]
