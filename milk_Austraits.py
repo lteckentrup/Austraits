@@ -101,10 +101,33 @@ def grab_trait(trait_name):
 
     return (df_trait)
 
-df_SLA = grab_trait('specific_leaf_area')
-df_SLA = grab_trait('leaf_C_per_dry_mass')
+### Example: get wood density
+def get_wooddens(veggroup):
+    df_wooddens = grab_trait('wood_density')
+    df_woodC = grab_trait('wood_C_per_dry_mass')
 
-df_SLA_filter = df_SLA[['value','PHEN','PGF','PHOT','LeafType','lat','lon']].dropna()
+    ### Filter dataframes for entries that have both wood density 
+    ### and wood carbon carbon content. Units cancel out
+    df_wooddens_ID = df_wooddens[df_wooddens['dataset_id'].str.contains('Buckton_2019|Crous_2019|Lewis_2015|Wright_2019')]
+    df_woodC_ID = df_woodC[df_woodC['dataset_id'].str.contains('Buckton_2019|Wright_2019')]
 
-df_SLA_herb = df_SLA_filter[df_SLA_filter['PGF'].str.contains('herb|graminoid_not_tussock')]
-df_SLA_tree = df_SLA_filter[df_SLA_filter['PGF'].str.contains('tree')]
+    df_wooddens_veggroup = df_wooddens_ID[df_wooddens_ID['PGF'].str.contains(veggroup)]
+    df_woodC_veggroup = df_woodC_ID[df_woodC_ID['PGF'].str.contains(veggroup)]
+
+    obs_ID = df_woodC_veggroup.observation_id.to_list()
+
+    wooddens = []
+
+    for i in obs_ID:
+        try:
+            woodC = df_woodC_veggroup[df_woodC_veggroup.observation_id == i].loc[:,'value'].iloc[0]
+            wooddens_kg = df_wooddens_veggroup[df_wooddens_veggroup.observation_id == i].loc[:,'value'].iloc[0]
+            wooddens.append(float(woodC)*float(wooddens_kg))
+        except IndexError:
+            pass
+
+    print(veggroup)
+    print(np.median(wooddens))
+
+get_wooddens('tree')
+get_wooddens('shrub')  
