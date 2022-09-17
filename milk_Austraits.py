@@ -22,10 +22,11 @@ PHOT = []
 
 for i in TN:
     try:
-        PHEN.append(df_PHEN[df_PHEN.taxon_name == i].loc[:,'value'].iloc[0])
-        PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].iloc[0])
-        PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].iloc[0])
-    except IndexError:
+        PHEN.append(df_PHEN[df_PHEN.taxon_name == i].loc[:,'value'].mode()[0])
+        PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].mode()[0])
+        PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
+    except KeyError:
         PHEN.append(np.nan)
         PGF.append(np.nan)
         PHOT.append(np.nan)
+
