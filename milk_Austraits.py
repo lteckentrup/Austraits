@@ -15,7 +15,9 @@ df_PHOT = df_traits[df_traits['trait_name'] == 'photosynthetic_pathway']
 TN = df_SLA.taxon_name.to_list()
 
 ### Loop through all names and assign phenology, growth form,
-### and photosyntetic pathway
+### and photosyntetic pathway. Loops need to be separate to avoid double 
+### counting of nan
+
 PHEN = []
 PGF = []
 PHOT = []
@@ -23,10 +25,17 @@ PHOT = []
 for i in TN:
     try:
         PHEN.append(df_PHEN[df_PHEN.taxon_name == i].loc[:,'value'].mode()[0])
-        PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].mode()[0])
-        PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
     except KeyError:
         PHEN.append(np.nan)
-        PGF.append(np.nan)
-        PHOT.append(np.nan)
 
+for i in TN:
+    try:
+        PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].mode()[0])
+    except KeyError:
+        PGF.append(np.nan)
+
+for i in TN:
+    try:
+        PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
+    except KeyError:
+        PHOT.append(np.nan)
