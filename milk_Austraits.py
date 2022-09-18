@@ -140,24 +140,24 @@ def get_wooddens(veggroup):
 get_wooddens('tree')
 get_wooddens('shrub')
 
-def isla_params():
+def isla_params(leaftype):
     ### Define equation based on Reich et al., 1992 - calculate SLA from leaflong
     df_SLA = grab_trait('specific_leaf_area')
     df_lifespan = grab_trait('leaf_lifespan')
 
     ### Select broadleafed vegetation
-    df_SLA_BDL = df_SLA[df_SLA['LeafType']=='broadleaf']
-    df_lifespan_BDL = df_lifespan[df_lifespan['LeafType']=='broadleaf']
+    df_SLA_leaf = df_SLA[df_SLA['LeafType']==leaftype]
+    df_lifespan_leaf = df_lifespan[df_lifespan['LeafType']==leaftype]
 
     SLA = []
     LIFESPAN = []
-    obs_ID = df_SLA_BDL.observation_id.to_list()
+    obs_ID = df_SLA_leaf.observation_id.to_list()
 
     ### Grab data that match
     for i in obs_ID:
         try:
-            sla = df_SLA_BDL[df_SLA_BDL.observation_id == i].loc[:,'value'].iloc[0]
-            lifespan = df_lifespan_BDL[df_lifespan_BDL.observation_id == i].loc[:,'value'].iloc[0]
+            sla = df_SLA_leaf[df_SLA_BDL.observation_id == i].loc[:,'value'].iloc[0]
+            lifespan = df_lifespan_leaf[df_lifespan_BDL.observation_id == i].loc[:,'value'].iloc[0]
 
             SLA.append(float(sla)*10)
             LIFESPAN.append(float(lifespan))
@@ -172,3 +172,7 @@ def isla_params():
     ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA))
     print(ransac.estimator_.coef_)
     print(ransac.estimator_.intercept_)
+
+isla_params('broadleaf')
+### Sample size very small for needle leaf trees, and based on shrubs :/
+isla_params('needle')
