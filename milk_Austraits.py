@@ -176,3 +176,30 @@ def isla_params(leaftype):
 isla_params('broadleaf')
 ### Sample size very small for needle leaf trees, and based on shrubs :/
 isla_params('needle')
+
+def get_lifespan(vegtype,phen,leaftype,region):
+    df_lifespan = grab_trait('leaf_lifespan')
+
+    if vegtype=='tree':
+        df_lifespan_veg = df_lifespan[df_lifespan['PGF'].str.contains('tree')]
+        df_lifespan_veg_phen = df_lifespan_veg[df_lifespan_veg['PHEN'].str.contains(phen)]
+        df_lifespan_veg = df_lifespan_veg[df_lifespan_veg['LeafType'].str.contains(leaftype)]
+
+        if region=='tropical':
+            df_lifespan_veg_phen = df_lifespan_veg_phen[df_lifespan_veg_phen['lat'] >= -30]
+        else:
+            df_lifespan_veg_phen = df_lifespan_veg_phen[df_lifespan_veg_phen['lat'] < -30]
+
+        print(vegtype)    
+        print(phen)
+        print(leaftype)
+        print(region)
+        print(df_lifespan_veg_phen.value.median())
+                
+    elif vegtype=='grass':
+        df_lifespan_veg = df_lifespan[df_lifespan['PGF'].str.contains('herb|graminoid')]
+
+        print(vegtype)    
+        print(df_lifespan_veg.value.median())
+
+get_lifespan('tree','semi_deciduous','broadleaf','tropical')
