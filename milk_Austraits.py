@@ -146,8 +146,8 @@ def isla_params():
     df_lifespan = grab_trait('leaf_lifespan')
 
     ### Select broadleafed vegetation
-    df_SLA_BDL = df_SLA[df_SLA['PGF']=='broadleaf']
-    df_lifespan_BDL = df_lifespan[df_lifespan['PGF']=='broadleaf']
+    df_SLA_BDL = df_SLA[df_SLA['LeafType']=='broadleaf']
+    df_lifespan_BDL = df_lifespan[df_lifespan['LeafType']=='broadleaf']
 
     SLA = []
     LIFESPAN = []
@@ -160,13 +160,15 @@ def isla_params():
             lifespan = df_lifespan_BDL[df_lifespan_BDL.observation_id == i].loc[:,'value'].iloc[0]
 
             SLA.append(float(sla)*10)
-            LIFESPAN.append(float(lifespan)*10)
+            LIFESPAN.append(float(lifespan))
 
         except (IndexError,KeyError):
             pass
 
-    lifespan = np.array(LIFESPAN)
-    ransac.fit(np.log10(lifespan.reshape((-1, 1))),np.log10(df.sla))
-    
+    SLA = np.array(SLA)
+    LIFESPAN = np.array(LIFESPAN)
+
+    ### Fit linear regression robust against outliers
+    ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA))
     print(ransac.estimator_.coef_)
     print(ransac.estimator_.intercept_)
