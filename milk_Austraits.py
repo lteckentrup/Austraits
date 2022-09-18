@@ -1,3 +1,12 @@
+'''
+Uses AustTraits to update LPJ GUESS PFTs parameters and the calculation that translates
+leaf lifespan to specific leaf area following
+
+Reich, P. B., Walters, M. B., & Ellsworth, D. S. (1992). Leaf Life-Span in Relation to Leaf, 
+Plant, and Stand Characteristics among Diverse Ecosystems. Ecological Monographs, 62(3), 
+365–392. https://doi.org/10.2307/2937116
+'''
+
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
