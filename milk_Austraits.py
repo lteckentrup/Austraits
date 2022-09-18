@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn import linear_model
 
 df_AusTraits = pd.read_csv('traits.csv',low_memory=False)
 
@@ -33,21 +34,21 @@ def grab_trait(trait_name):
         try:
             PHEN.append(df_PHEN[df_PHEN.taxon_name == i].loc[:,'value'].mode()[0])
         except KeyError:
-            PHEN.append(np.nan)
+            PHEN.append('not_defined')
 
     ### Plant growth form
     for i in TN:
         try:
             PGF.append(df_PGF[df_PGF.taxon_name == i].loc[:,'value'].mode()[0])
         except KeyError:
-            PGF.append(np.nan)
+            PGF.append('not_defined')
 
     ### Photosynthetic pathway
     for i in TN:
         try:
             PHOT.append(df_PHOT[df_PHOT.taxon_name == i].loc[:,'value'].mode()[0])
         except KeyError:
-            PHOT.append(np.nan)
+            PHOT.append('not_defined')
 
     ### Leaf type
     for i in TN:
@@ -61,7 +62,7 @@ def grab_trait(trait_name):
     df_trait['PGF'] = PGF
     df_trait['PHOT'] = PHOT
     df_trait['LeafType'] = LeafType
-    
+
     '''
     Now grab site information: latitude and longitude so traits can be grouped into
     temperate and tropical vegetation (LPJ-GUESS has temperatue and tropical PFTs)
@@ -84,7 +85,7 @@ def grab_trait(trait_name):
             lat = df_lats[(df_lats.site_name == sn) &
                           (df_lats.dataset_id == di)].loc[:,'value'].iloc[0]
             lats.append(float(lat))
-        except IndexError:
+        except (IndexError,ValueError):
             lats.append(np.nan)
 
     ### Get longitude
@@ -93,7 +94,7 @@ def grab_trait(trait_name):
             lon = df_lons[(df_lons.site_name == sn) &
                           (df_lons.dataset_id == di)].loc[:,'value'].iloc[0]
             lons.append(float(lon))
-        except IndexError:
+        except (IndexError,ValueError):
             lons.append(np.nan)
 
     df_trait['lat'] = lats
@@ -101,18 +102,16 @@ def grab_trait(trait_name):
 
     return (df_trait)
 
-### Example: get wood density
 def get_wooddens(veggroup):
     df_wooddens = grab_trait('wood_density')
     df_woodC = grab_trait('wood_C_per_dry_mass')
 
-    ### Filter dataframes for entries that have both wood density 
-    ### and wood carbon carbon content. Units cancel out
-    df_wooddens_ID = df_wooddens[df_wooddens['dataset_id'].str.contains('Buckton_2019|Crous_2019|Lewis_2015|Wright_2019')]
-    df_woodC_ID = df_woodC[df_woodC['dataset_id'].str.contains('Buckton_2019|Wright_2019')]
+    ### Filter dataframes for nan
+    df_wooddens_filter = df_wooddens[['observation_id','value','PGF']].dropna()
+    df_woodC_filter = df_woodC[['observation_id','value','PGF']].dropna()
 
-    df_wooddens_veggroup = df_wooddens_ID[df_wooddens_ID['PGF'].str.contains(veggroup)]
-    df_woodC_veggroup = df_woodC_ID[df_woodC_ID['PGF'].str.contains(veggroup)]
+    df_wooddens_veggroup = df_wooddens_filter[df_wooddens_filter['PGF'].str.contains(veggroup)]
+    df_woodC_veggroup = df_woodC_filter[df_woodC_filter['PGF'].str.contains(veggroup)]
 
     obs_ID = df_woodC_veggroup.observation_id.to_list()
 
@@ -130,4 +129,35 @@ def get_wooddens(veggroup):
     print(np.median(wooddens))
 
 get_wooddens('tree')
-get_wooddens('shrub')  
+get_wooddens('shrub')
+
+def isla_params():
+    ### Define equation based on Reich et al., 1992 - calculate SLA from leaflong
+    df_SLA = grab_trait('specific_leaf_area')
+    df_lifespan = grab_trait('leaf_lifespan')
+
+    ### Select broadleafed vegetation
+    df_SLA_BDL = df_SLA[df_SLA['PGF']=='broadleaf']
+    df_lifespan_BDL = df_lifespan[df_lifespan['PGF']=='broadleaf']
+
+    SLA = []
+    LIFESPAN = []
+    obs_ID = df_SLA_BDL.observation_id.to_list()
+
+    ### Grab data that match
+    for i in obs_ID:
+        try:
+            sla = df_SLA_BDL[df_SLA_BDL.observation_id == i].loc[:,'value'].iloc[0]
+            lifespan = df_lifespan_BDL[df_lifespan_BDL.observation_id == i].loc[:,'value'].iloc[0]
+
+            SLA.append(float(sla)*10)
+            LIFESPAN.append(float(lifespan)*10)
+
+        except (IndexError,KeyError):
+            pass
+
+    lifespan = np.array(LIFESPAN)
+    ransac.fit(np.log10(lifespan.reshape((-1, 1))),np.log10(df.sla))
+    
+    print(ransac.estimator_.coef_)
+    print(ransac.estimator_.intercept_)
