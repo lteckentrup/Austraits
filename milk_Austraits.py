@@ -1,12 +1,3 @@
-'''
-Uses AustTraits to update LPJ GUESS PFTs parameters and the calculation that translates
-leaf lifespan to specific leaf area following
-
-Reich, P. B., Walters, M. B., & Ellsworth, D. S. (1992). Leaf Life-Span in Relation to Leaf, 
-Plant, and Stand Characteristics among Diverse Ecosystems. Ecological Monographs, 62(3), 
-365–392. https://doi.org/10.2307/2937116
-'''
-
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
@@ -64,7 +55,7 @@ def grab_trait(trait_name):
         try:
             LeafType.append(df_LeafType[df_LeafType.taxon_name == i].loc[:,'value'].mode()[0])
         except KeyError:
-            LeafType.append(np.nan)
+            LeafType.append('not_defined')
 
     ### Add info to dataframe
     df_trait['PHEN'] = PHEN
@@ -95,7 +86,7 @@ def grab_trait(trait_name):
                           (df_lats.dataset_id == di)].loc[:,'value'].iloc[0]
             lats.append(float(lat))
         except (IndexError,ValueError):
-            lats.append(np.nan)
+            lats.append('not_defined')
 
     ### Get longitude
     for sn,di in zip(SN,DI):
@@ -104,7 +95,7 @@ def grab_trait(trait_name):
                           (df_lons.dataset_id == di)].loc[:,'value'].iloc[0]
             lons.append(float(lon))
         except (IndexError,ValueError):
-            lons.append(np.nan)
+            lons.append('not_defined')
 
     df_trait['lat'] = lats
     df_trait['lon'] = lons
@@ -112,25 +103,25 @@ def grab_trait(trait_name):
     return (df_trait)
 
 def get_wooddens(veggroup):
+    ### AusTraits reports wood density in kg/m3 but LPJ GUESS takes kgC/m3
     df_wooddens = grab_trait('wood_density')
     df_woodC = grab_trait('wood_C_per_dry_mass')
 
     ### Filter dataframes for nan
-    df_wooddens_filter = df_wooddens[['observation_id','value','PGF']].dropna()
-    df_woodC_filter = df_woodC[['observation_id','value','PGF']].dropna()
-
-    df_wooddens_veggroup = df_wooddens_filter[df_wooddens_filter['PGF'].str.contains(veggroup)]
-    df_woodC_veggroup = df_woodC_filter[df_woodC_filter['PGF'].str.contains(veggroup)]
+    df_wooddens_veggroup = df_wooddens[df_wooddens['PGF'].str.contains(veggroup)]
+    df_woodC_veggroup = df_woodC[df_woodC['PGF'].str.contains(veggroup)]
 
     obs_ID = df_woodC_veggroup.observation_id.to_list()
 
     wooddens = []
-
+    lat = []
     for i in obs_ID:
         try:
             woodC = df_woodC_veggroup[df_woodC_veggroup.observation_id == i].loc[:,'value'].iloc[0]
             wooddens_kg = df_wooddens_veggroup[df_wooddens_veggroup.observation_id == i].loc[:,'value'].iloc[0]
+            LAT = df_wooddens_veggroup[df_wooddens_veggroup.observation_id == i].loc[:,'lat'].iloc[0]
             wooddens.append(float(woodC)*float(wooddens_kg))
+            lat.append(LAT)
         except IndexError:
             pass
 
@@ -156,8 +147,8 @@ def isla_params(leaftype):
     ### Grab data that match
     for i in obs_ID:
         try:
-            sla = df_SLA_leaf[df_SLA_BDL.observation_id == i].loc[:,'value'].iloc[0]
-            lifespan = df_lifespan_leaf[df_lifespan_BDL.observation_id == i].loc[:,'value'].iloc[0]
+            sla = df_SLA_leaf[df_SLA_leaf.observation_id == i].loc[:,'value'].iloc[0]
+            lifespan = df_lifespan_leaf[df_lifespan_leaf.observation_id == i].loc[:,'value'].iloc[0]
 
             SLA.append(float(sla)*10)
             LIFESPAN.append(float(lifespan))
@@ -169,37 +160,56 @@ def isla_params(leaftype):
     LIFESPAN = np.array(LIFESPAN)
 
     ### Fit linear regression robust against outliers
-    ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA))
+    ransac = linear_model.RANSACRegressor()
+    ransac.fit(np.log(LIFESPAN.reshape((-1, 1))),np.log(SLA))
     print(ransac.estimator_.coef_)
     print(ransac.estimator_.intercept_)
 
-isla_params('broadleaf')
-### Sample size very small for needle leaf trees, and based on shrubs :/
-isla_params('needle')
-
+### Get leaf lifespan
 def get_lifespan(vegtype,phen,leaftype,region):
     df_lifespan = grab_trait('leaf_lifespan')
 
     if vegtype=='tree':
-        df_lifespan_veg = df_lifespan[df_lifespan['PGF'].str.contains('tree')]
-        df_lifespan_veg_phen = df_lifespan_veg[df_lifespan_veg['PHEN'].str.contains(phen)]
-        df_lifespan_veg = df_lifespan_veg[df_lifespan_veg['LeafType'].str.contains(leaftype)]
+        df_lifespan_veg = df_lifespan[df_lifespan['PGF']=='tree']
+        # df_lifespan_veg_phen = df_lifespan_veg[df_lifespan_veg['PHEN'].str.contains(phen)]
+        df_lifespan_veg_phen = df_lifespan_veg[df_lifespan_veg['PHEN']==phen]
+        df_lifespan_veg = df_lifespan_veg[df_lifespan_veg['LeafType']==leaftype]
 
         if region=='tropical':
             df_lifespan_veg_phen = df_lifespan_veg_phen[df_lifespan_veg_phen['lat'] >= -30]
         else:
             df_lifespan_veg_phen = df_lifespan_veg_phen[df_lifespan_veg_phen['lat'] < -30]
 
-        print(vegtype)    
+        ### Divide by 12: LPJ takes leaf lifespan in years
+        print(vegtype)
         print(phen)
         print(leaftype)
         print(region)
-        print(df_lifespan_veg_phen.value.median())
-                
+        print('sample size: '+str(len(df_lifespan_veg_phen)))
+        print(df_lifespan_veg_phen.value.median()/12)
+
     elif vegtype=='grass':
         df_lifespan_veg = df_lifespan[df_lifespan['PGF'].str.contains('herb|graminoid')]
 
-        print(vegtype)    
-        print(df_lifespan_veg.value.median())
+        ### Divide by 12: LPJ takes leaf lifespan in years
+        print(vegtype)
+        print('sample size: '+str(len(df_lifespan_veg)))
+        print(df_lifespan_veg.value.median()/12)
 
 get_lifespan('tree','semi_deciduous','broadleaf','tropical')
+get_lifespan('tree','evergreen','broadleaf','tropical')
+get_lifespan('tree','deciduous','broadleaf','tropical')
+get_lifespan('tree','evergreen','broadleaf','temperate')
+get_lifespan('tree','deciduous','broadleaf','temperate')
+get_lifespan('tree','semi_deciduous','broadleaf','temperate')
+get_lifespan('tree','evergreen','needle','temperate')
+get_lifespan('grass','','','')
+
+### Get k_latosa
+
+df = grab_trait('huber_value')
+### Tropical broadleaf:
+1/df[(df['PGF']=='tree')&(df['lat']>-30)&(df['LeafType']=='broadleaf')].value.median()
+
+### Temperate broadleaf:
+1/df[(df['PGF']=='tree')&(df['lat']<-30)&(df['LeafType']=='broadleaf')].value.median()
