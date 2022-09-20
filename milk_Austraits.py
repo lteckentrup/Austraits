@@ -357,3 +357,8 @@ print(1/df_klatosa[(df_klatosa['context_name']!='Drought')&
                    (df_klatosa['PGF']=='shrub')].value.dropna().astype(float).quantile(0.75))
 
 #-------------------------------------------------------------------------------
+'''
+Reich, P.B., Walters, M.B. and Ellsworth, D.S. (1992), Leaf Life-Span in Relation to Leaf, Plant, 
+and Stand Characteristics among Diverse Ecosystems. Ecological Monographs, 62: 365-392. 
+https://doi.org/10.2307/2937116
+'''
