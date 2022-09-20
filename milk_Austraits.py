@@ -234,7 +234,7 @@ print(df_lifespan[(df_lifespan['PGF']=='herb')|
                   (df_lifespan['PGF']=='graminoid')].value.dropna().astype(float).median()/12)
 
 #-------------------------------------------------------------------------------
-### For the missing data we calculate leaf life span from specific leaf area.
+### For the missing data calculate leaf life span from specific leaf area.
 ### Lifespan is also needed for ctonmin so keep lifespan instead of updating
 ### sla following updated equation
 
