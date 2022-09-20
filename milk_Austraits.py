@@ -167,7 +167,7 @@ def isla_params(leaftype):
     LIFESPAN = np.array(LIFESPAN)
 
     ### Fit linear regression robust against outliers
-    ransac = linear_model.RANSACRegressor()
+    ransac = linear_model.RANSACRegressor(random_state=42)
     ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA)/10)
     print(ransac.estimator_.coef_)
     print(ransac.estimator_.intercept_)
