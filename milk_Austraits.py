@@ -165,13 +165,15 @@ def isla_params(leaftype):
 
     SLA = np.array(SLA)
     LIFESPAN = np.array(LIFESPAN)
+    
+    ### Export to csv and calculate regression separately in plotting script
+    df = pd.DataFrame()
+    df['leaflong'] = LIFESPAN
+    df['SLA'] = SLA
+    df.to_csv(leaftype+'_calcsla.csv')
 
-    ### Fit linear regression robust against outliers
-    ransac = linear_model.RANSACRegressor(random_state=42)
-    ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA)/10)
-    print(ransac.estimator_.coef_)
-    print(ransac.estimator_.intercept_)
-
+isla_params('broadleaf')
+isla_params('needle')
 isla_params('broadleaf')
 isla_params('needle')
 
