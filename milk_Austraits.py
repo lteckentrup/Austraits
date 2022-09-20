@@ -168,7 +168,7 @@ def isla_params(leaftype):
 
     ### Fit linear regression robust against outliers
     ransac = linear_model.RANSACRegressor()
-    ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA))
+    ransac.fit(np.log10(LIFESPAN.reshape((-1, 1))),np.log10(SLA)/10)
     print(ransac.estimator_.coef_)
     print(ransac.estimator_.intercept_)
 
