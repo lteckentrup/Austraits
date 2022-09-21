@@ -143,7 +143,8 @@ def isla_params(leaftype):
     Define equation based on Reich et al., 1992 - empirical equation linking
     lifespan and SLA. Reich calculate based on SLA in cm2/g but LPJ needs m2/kgC. 
     However there is no overlap between AusTraits SLA, lifespan, and leaf carbon 
-    content. Use default conversion factor in LPJ?
+    content. Median leaf carbon per dry mass is 483.75 mg/g in AusTraits, so matches
+    LPJ conversion factor of 2.
     '''
     df_SLA = grab_trait('specific_leaf_area')
     df_lifespan = grab_trait('leaf_lifespan')
@@ -241,9 +242,11 @@ print(df_lifespan[(df_lifespan['PGF']=='herb')|
                   (df_lifespan['PGF']=='graminoid')].value.dropna().astype(float).median()/12)
 
 #-------------------------------------------------------------------------------
-### For the missing data calculate leaf life span from specific leaf area.
-### Lifespan is also needed for ctonmin so keep lifespan instead of updating
-### sla following updated equation
+'''
+For the missing data calculate leaf life span from specific leaf area.
+Lifespan is also needed for ctonmin so keep lifespan instead of updating
+sla following updated equation
+'''
 
 ### Get specific leaf area
 df_SLA = grab_trait('specific_leaf_area')
