@@ -139,7 +139,12 @@ get_wooddens('shrub')
 ### Update calcsla function
    
 def isla_params(leaftype):
-    ### Define equation based on Reich et al., 1992 - calculate SLA from leaflong
+    '''
+    Define equation based on Reich et al., 1992 - empirical equation linking
+    lifespan and SLA. Reich calculate based on SLA in cm2/g but LPJ needs m2/kgC. 
+    However there is no overlap between AusTraits SLA, lifespan, and leaf carbon 
+    content. Use default conversion factor in LPJ?
+    '''
     df_SLA = grab_trait('specific_leaf_area')
     df_lifespan = grab_trait('leaf_lifespan')
 
